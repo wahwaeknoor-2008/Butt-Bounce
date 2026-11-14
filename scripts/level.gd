@@ -127,7 +127,7 @@ func _add_platform(
 	world_position: Vector3,
 	platform_size: Vector3,
 	platform_kind: int,
-	range: float,
+	travel_range: float,
 	speed: float,
 	color: Color
 ) -> void:
@@ -137,7 +137,7 @@ func _add_platform(
 	platform.set_script(PLATFORM_SCRIPT)
 	platform.set("kind", platform_kind)
 	platform.set("size", platform_size)
-	platform.set("move_range", range)
+	platform.set("move_range", travel_range)
 	platform.set("move_speed", speed)
 	platform.set("top_color", color)
 	world.add_child(platform)
