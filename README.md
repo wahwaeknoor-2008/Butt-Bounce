@@ -28,13 +28,13 @@ After a bounce, the character lands on his butt and automatically stands up agai
 
 ## Character animation
 
-The visible player now uses the uploaded character scene at `assets/characters/butt_bouncer.tscn`. The model has a simple grouped mesh rather than a skeleton, so the whole character is tilted as one piece for the seated bounce pose.
+The visible player uses the exact uploaded character scene at `assets/characters/butt_bouncer.tscn`. Its mesh geometry and materials are left untouched. The grouped mesh is tilted as a single piece during the seated bounce pose.
 
-- Hold Space or left mouse to charge the first bounce
+- Hold Space or left mouse to charge one bounce
 - Release to launch forward and upward
-- The character rotates backward into a butt-first airborne pose
-- On ground impact, the fart sound plays and the character automatically rebounds forward
-- WASD / arrow keys steer the next rebound direction
+- On ground impact, the fart sound plays
+- The character stays seated briefly, then stands up; there is no automatic repeated rebound
+- WASD / arrow keys steer while moving or airborne
 
 ## Project structure
 
