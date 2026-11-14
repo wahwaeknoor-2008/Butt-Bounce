@@ -11,6 +11,11 @@ var camera: Camera3D
 var charge_bar: ProgressBar
 var message_label: Label
 var distance_label: Label
+var coin_label: Label
+var coins_collected := 0
+var total_coins := 0
+var _coin_nodes: Array[Area3D] = []
+var _coin_base_heights: Dictionary = {}
 var won := false
 var _detail_time := 0.0
 var _rotating_details: Array[Node3D] = []
@@ -41,6 +46,7 @@ func _ready() -> void:
 	player.player_fell.connect(_on_player_fell)
 	player.charge_updated.connect(_on_charge_updated)
 	player.bounce_launched.connect(_on_bounce_launched)
+	_setup_coin_collection()
 	_create_camera()
 	_create_hud()
 	var goal: Area3D = world.get_node("Markers/GoalZone")
@@ -81,6 +87,15 @@ func _process(delta: float) -> void:
 	for warning_light in _warning_lights:
 		warning_light.light_energy = 0.65 + 0.45 * (0.5 + 0.5 * sin(_detail_time * 3.2))
 
+	# Coins spin and gently hover so players can recognize pickups from a distance.
+	for coin_index in range(_coin_nodes.size()):
+		var coin := _coin_nodes[coin_index]
+		if not is_instance_valid(coin):
+			continue
+		coin.rotate_y(delta * 2.4)
+		var base_height := float(_coin_base_heights.get(coin.get_instance_id(), coin.position.y))
+		coin.position.y = base_height + sin(_detail_time * 3.0 + float(coin_index) * 0.35) * 0.12
+
 	player.set_camera_yaw(_camera_yaw)
 	var target := player.global_position + Vector3.UP * 0.9
 	var horizontal_distance := _camera_distance * cos(_camera_pitch)
@@ -98,6 +113,71 @@ func _process(delta: float) -> void:
 	camera.look_at(target, Vector3.UP)
 	var travelled := int(maxf(0.0, -player.global_position.z))
 	distance_label.text = "ROOFTOP RUN   •   %dm" % travelled
+
+
+func _setup_coin_collection() -> void:
+	_coin_nodes.clear()
+	_coin_base_heights.clear()
+	coins_collected = 0
+
+	for coin_node in get_tree().get_nodes_in_group("coins"):
+		var coin := coin_node as Area3D
+		if coin == null:
+			continue
+
+		# Only the player's collision layer should trigger the pickup.
+		coin.collision_layer = 0
+		coin.collision_mask = 1
+		coin.monitoring = true
+		coin.monitorable = true
+		coin.body_entered.connect(_on_coin_body_entered.bind(coin))
+		_coin_nodes.append(coin)
+		_coin_base_heights[coin.get_instance_id()] = coin.position.y
+
+	total_coins = _coin_nodes.size()
+	_update_coin_counter()
+
+
+func _on_coin_body_entered(body: Node3D, coin: Area3D) -> void:
+	if body != player or not is_instance_valid(coin):
+		return
+	if coin.has_meta("collected"):
+		return
+
+	coin.set_meta("collected", true)
+	coin.set_deferred("monitoring", false)
+	coins_collected += 1
+	_update_coin_counter()
+	_show_coin_pickup(coin.global_position)
+	coin.queue_free()
+
+
+func _update_coin_counter() -> void:
+	if coin_label != null:
+		coin_label.text = "COINS  •  %d / %d" % [coins_collected, total_coins]
+
+
+func _show_coin_pickup(world_position: Vector3) -> void:
+	var popup := Label3D.new()
+	popup.name = "CoinPickupPopup"
+	popup.text = "+1"
+	popup.font_size = 64
+	popup.outline_size = 12
+	popup.modulate = Color(1.0, 0.86, 0.24, 1.0)
+	popup.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	world.add_child(popup)
+	popup.global_position = world_position + Vector3.UP * 0.65
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(
+		popup,
+		"global_position",
+		popup.global_position + Vector3.UP * 1.35,
+		0.62
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(popup, "modulate:a", 0.0, 0.62)
+	tween.finished.connect(popup.queue_free)
 
 
 func _upgrade_rooftop_environment() -> void:
@@ -381,6 +461,23 @@ func _create_hud() -> void:
 	camera_help.text = "MOUSE: LOOK  •  WHEEL: ZOOM  •  ESC: RELEASE MOUSE"
 	camera_help.add_theme_font_size_override("font_size", 12)
 	column.add_child(camera_help)
+
+	# Compact coin counter in the top-right corner, separate from the controls.
+	var coin_panel := PanelContainer.new()
+	coin_panel.name = "CoinCounterPanel"
+	coin_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	coin_panel.offset_left = -218.0
+	coin_panel.offset_top = 22.0
+	coin_panel.offset_right = -24.0
+	coin_panel.offset_bottom = 78.0
+	layer.add_child(coin_panel)
+
+	coin_label = Label.new()
+	coin_label.name = "CoinCounter"
+	coin_label.text = "COINS  •  %d / %d" % [coins_collected, total_coins]
+	coin_label.add_theme_font_size_override("font_size", 20)
+	coin_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	coin_panel.add_child(coin_label)
 
 
 func _on_charge_updated(amount: float) -> void:
