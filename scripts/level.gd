@@ -133,7 +133,7 @@ func _add_platform(
 ) -> void:
 	var platform := AnimatableBody3D.new()
 	platform.name = platform_name
-	platform.global_position = world_position
+	platform.position = world_position
 	platform.set_script(PLATFORM_SCRIPT)
 	platform.set("kind", platform_kind)
 	platform.set("size", platform_size)
