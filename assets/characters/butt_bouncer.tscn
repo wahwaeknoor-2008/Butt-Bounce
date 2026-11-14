@@ -67,7 +67,7 @@ mesh = SubResource("CapsuleMesh_m6sh0")
 transform = Transform3D(0.35838997, 0.0027878142, -0.0012561965, -0.003276286, 0.3051686, -0.0021667134, 0.0006804216, 0.0010207215, 0.65122247, 0.16930747, -1.088915, 0.13345385)
 mesh = SubResource("SphereMesh_7ofsd")
 
-[node name="MeshInstance2B" type="MeshInstance3D" parent="." unique_id=1771546866]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1771546866]
 transform = Transform3D(0.35838997, 0.0027878142, -0.0012561965, -0.003276286, 0.3051686, -0.0021667134, 0.0006804216, 0.0010207215, 0.65122247, -0.26080477, -1.088915, 0.13345385)
 mesh = SubResource("SphereMesh_7ofsd")
 
