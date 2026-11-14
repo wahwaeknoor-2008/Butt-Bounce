@@ -216,6 +216,7 @@ func _launch_bounce(input_direction: Vector3) -> void:
 
 
 func apply_spring_boost(upward_power: float = 17.0, forward_power: float = 4.0) -> void:
+	floor_snap_length = 0.0
 	velocity.y = maxf(velocity.y, upward_power)
 	velocity.x += _last_direction.x * forward_power
 	velocity.z += _last_direction.z * forward_power
