@@ -1,0 +1,108 @@
+[gd_scene format=3 uid="uid://b6002xcq2t0qw"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_0q0ai"]
+radius = 0.49783325
+height = 0.9956665
+
+[sub_resource type="SphereMesh" id="SphereMesh_0q0ai"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0q0ai"]
+top_radius = 0.12988281
+bottom_radius = 0.12988281
+height = 0.6802063
+
+[sub_resource type="SphereMesh" id="SphereMesh_m6sh0"]
+
+[sub_resource type="TorusMesh" id="TorusMesh_0q0ai"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_m6sh0"]
+radius = 0.08886719
+height = 0.7029419
+
+[sub_resource type="SphereMesh" id="SphereMesh_7ofsd"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_1w8qv"]
+radius = 0.029296875
+height = 0.232193
+
+[node name="main" type="Node3D" unique_id=1677985095]
+
+[node name="body" type="MeshInstance3D" parent="." unique_id=918768847]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06210363, -0.12618724, 0.0356102)
+mesh = SubResource("CapsuleMesh_0q0ai")
+
+[node name="eye1" type="MeshInstance3D" parent="." unique_id=1910110121]
+transform = Transform3D(0.15, 0, 0, 0, 0.15, 0, 0, 0, 0.14400001, -0.19809058, -0.09931656, 0.47632104)
+mesh = SubResource("SphereMesh_0q0ai")
+
+[node name="eye2" type="MeshInstance3D" parent="." unique_id=720548139]
+transform = Transform3D(0.15, 0, 0, 0, 0.15, 0, 0, 0, 0.14400001, 0.034529686, -0.09931656, 0.4894567)
+mesh = SubResource("SphereMesh_0q0ai")
+
+[node name="leg1" type="MeshInstance3D" parent="." unique_id=783514754]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14736387, -0.8017989, 0.002320379)
+mesh = SubResource("CylinderMesh_0q0ai")
+
+[node name="leg1" type="MeshInstance3D" parent="leg1" unique_id=75064208]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.39971295, 0.008976221, 0.020969361)
+mesh = SubResource("CylinderMesh_0q0ai")
+
+[node name="butt" type="MeshInstance3D" parent="." unique_id=612856750]
+transform = Transform3D(0.32140905, 0, 0, 0, 0.32140905, 0, 0, 0, 0.32140905, 0.08472508, -0.36279848, -0.27682257)
+mesh = SubResource("SphereMesh_m6sh0")
+
+[node name="butt2" type="MeshInstance3D" parent="." unique_id=969887822]
+transform = Transform3D(0.32140905, 0, 0, 0, 0.32140905, 0, 0, 0, 0.32140905, -0.20133811, -0.35588792, -0.27406326)
+mesh = SubResource("SphereMesh_m6sh0")
+
+[node name="mouth" type="MeshInstance3D" parent="." unique_id=1960455773]
+transform = Transform3D(0.29190654, 0, 0, 0, 0.29190654, 0, 0, 0, 0.3734684, -0.046678543, -0.3088376, 0.2106958)
+mesh = SubResource("TorusMesh_0q0ai")
+
+[node name="hand1" type="MeshInstance3D" parent="." unique_id=1217486858]
+transform = Transform3D(0.7053062, -0.70890284, 0, 0.70890284, 0.7053062, 0, 0, 0, 1, 0.5419125, -0.3141817, 0.017779052)
+mesh = SubResource("CapsuleMesh_m6sh0")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=383855478]
+transform = Transform3D(0.35838997, 0.0027878142, -0.0012561965, -0.003276286, 0.3051686, -0.0021667134, 0.0006804216, 0.0010207215, 0.65122247, 0.16930747, -1.088915, 0.13345385)
+mesh = SubResource("SphereMesh_7ofsd")
+
+[node name="MeshInstance2B" type="MeshInstance3D" parent="." unique_id=1771546866]
+transform = Transform3D(0.35838997, 0.0027878142, -0.0012561965, -0.003276286, 0.3051686, -0.0021667134, 0.0006804216, 0.0010207215, 0.65122247, -0.26080477, -1.088915, 0.13345385)
+mesh = SubResource("SphereMesh_7ofsd")
+
+[node name="hand2" type="MeshInstance3D" parent="." unique_id=1393471160]
+transform = Transform3D(0.7115779, 0.7026072, 0, -0.7026072, 0.7115779, 0, 0, 0, 1, -0.66872764, -0.3223632, 0.06689358)
+mesh = SubResource("CapsuleMesh_m6sh0")
+
+[node name="FINGER" type="MeshInstance3D" parent="." unique_id=1479803964]
+transform = Transform3D(0.70295036, 0.711239, 0, -0.711239, 0.70295036, 0, 0, 0, 1, -0.9703232, -0.56342936, 0.06287128)
+mesh = SubResource("CapsuleMesh_1w8qv")
+
+[node name="FINGER2" type="MeshInstance3D" parent="." unique_id=753494226]
+transform = Transform3D(0.70295036, 0.711239, 0, -0.711239, 0.70295036, 0, 0, 0, 1, -0.9579717, -0.5531191, 0.12629631)
+mesh = SubResource("CapsuleMesh_1w8qv")
+
+[node name="FINGER2" type="MeshInstance3D" parent="." unique_id=1861282180]
+transform = Transform3D(0.70295036, 0.711239, 0, -0.711239, 0.70295036, 0, 0, 0, 1, -0.9579717, -0.5531191, -0.00015890598)
+mesh = SubResource("CapsuleMesh_1w8qv")
+
+[node name="FINGER4" type="MeshInstance3D" parent="." unique_id=601684139]
+transform = Transform3D(0.80300987, 0.1182957, 0.5841073, -0.59596515, 0.16083872, 0.7867379, -0.0008795783, -0.97986585, 0.19965518, -0.8039222, -0.47557908, 0.1963219)
+mesh = SubResource("CapsuleMesh_1w8qv")
+
+[node name="FINGER5" type="MeshInstance3D" parent="." unique_id=721977844]
+transform = Transform3D(0.49540764, -0.8540565, -0.1586164, 0.8686145, 0.48516333, 0.100627646, -0.0089868605, -0.18762815, 0.98219925, 0.8380048, -0.5882791, 0.07258797)
+mesh = SubResource("CapsuleMesh_1w8qv")
+
+[node name="FINGER6" type="MeshInstance3D" parent="." unique_id=373960571]
+transform = Transform3D(0.49540764, -0.8540565, -0.1586164, 0.8686145, 0.48516333, 0.100627646, -0.0089868605, -0.18762815, 0.98219925, 0.81492054, -0.5729463, 0.1318636)
+mesh = SubResource("CapsuleMesh_1w8qv")
+
+[node name="FINGER7" type="MeshInstance3D" parent="." unique_id=1160005096]
+transform = Transform3D(0.49540764, -0.8540565, -0.1586164, 0.8686145, 0.48516333, 0.100627646, -0.0089868605, -0.18762815, 0.98219925, 0.83497834, -0.5856712, 0.0076595545)
+mesh = SubResource("CapsuleMesh_1w8qv")
+
+[node name="FINGER8" type="MeshInstance3D" parent="." unique_id=885402139]
+transform = Transform3D(0.35978976, -0.028471552, -0.9325989, 0.93224704, -0.030062897, 0.36057177, -0.0383027, -0.99914247, 0.015726306, 0.69001186, -0.44013983, 0.16938043)
+mesh = SubResource("CapsuleMesh_1w8qv")
