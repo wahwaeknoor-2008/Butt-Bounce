@@ -11,11 +11,11 @@ signal player_fell
 @export var max_launch_up: float = 17.0
 @export var min_launch_forward: float = 9.0
 @export var max_launch_forward: float = 17.0
-@export var walk_speed: float = 6.2
-@export var ground_acceleration: float = 34.0
-@export var ground_braking: float = 48.0
-@export var air_steering: float = 18.0
-@export var air_braking: float = 7.0
+@export var walk_speed: float = 4.8
+@export var ground_acceleration: float = 48.0
+@export var ground_braking: float = 70.0
+@export var air_steering: float = 13.0
+@export var air_braking: float = 10.0
 
 @onready var visual: Node3D = $Visual
 @onready var launch_audio: AudioStreamPlayer = $LaunchAudio
