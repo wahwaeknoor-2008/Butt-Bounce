@@ -16,7 +16,7 @@ signal player_fell
 @export var ground_braking: float = 70.0
 @export var air_steering: float = 13.0
 @export var air_braking: float = 10.0
-@export var butt_landing_duration: float = 0.82
+@export var butt_landing_duration: float = 0.95
 
 @onready var visual: Node3D = $Visual
 @onready var launch_audio: AudioStreamPlayer = $LaunchAudio
@@ -580,8 +580,8 @@ func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 
 	# Lower the pelvis, bring thighs forward and bend the knees so the
 	# character visibly sits on his backside while charging / after landing.
-	_set_rotation(_torso_pivot, Vector3(0.18 * sit, 0.0, 0.0), blend)
-	_set_rotation(_head_pivot, Vector3(-0.06 * sit, 0.0, 0.0), blend)
+	_set_rotation(_torso_pivot, Vector3(-0.16 * sit, 0.0, 0.0), blend)
+	_set_rotation(_head_pivot, Vector3(0.08 * sit, 0.0, 0.0), blend)
 
 	_set_rotation(_left_hip, Vector3(-1.08 * sit, 0.0, 0.0), blend)
 	_set_rotation(_right_hip, Vector3(-1.08 * sit, 0.0, 0.0), blend)
@@ -595,7 +595,7 @@ func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	_set_rotation(_left_elbow, Vector3(-0.70 * sit, 0.0, 0.0), blend)
 	_set_rotation(_right_elbow, Vector3(-0.70 * sit, 0.0, 0.0), blend)
 
-	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.32, 0.16, sit), blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.32, -0.18, sit), blend)
 
 
 func _set_rotation(node: Node3D, target: Vector3, blend: float) -> void:
