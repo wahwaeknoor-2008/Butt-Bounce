@@ -7,8 +7,8 @@ signal player_fell
 
 @export var gravity: float = 25.0
 @export var max_charge_time: float = 1.45
-@export var min_launch_up: float = 10.0
-@export var max_launch_up: float = 19.0
+@export var min_launch_up: float = 13.0
+@export var max_launch_up: float = 22.0
 @export var min_launch_forward: float = 9.0
 @export var max_launch_forward: float = 17.0
 @export var walk_speed: float = 4.8
@@ -24,6 +24,7 @@ signal player_fell
 @onready var source_character: Node3D = $Visual/ParkourCharacter
 
 var _charging := false
+var _space_down := false
 var _charge_time := 0.0
 var _last_direction := Vector3(0, 0, -1)
 var _spawn_position := Vector3(0, 1.05, 4.0)
@@ -75,7 +76,7 @@ func _physics_process(delta: float) -> void:
 		_last_direction = input_dir.normalized()
 
 	var was_on_floor := is_on_floor()
-	var charge_held := Input.is_key_pressed(KEY_SPACE)
+	var charge_held := _space_down
 
 	if was_on_floor:
 		velocity.y = minf(velocity.y, 0.0)
@@ -142,7 +143,7 @@ func _physics_process(delta: float) -> void:
 
 	# Detect the first frame the bouncing player touches the floor while
 	# descending. Start the seated landing, then blend back to standing.
-	if _bounce_in_air and not was_on_floor and is_on_floor() and vertical_speed_before_slide <= 0.0:
+	if _bounce_in_air and is_on_floor() and vertical_speed_before_slide <= 0.0:
 		_begin_butt_landing()
 
 	_update_character_animation(delta, input_dir)
@@ -155,9 +156,12 @@ func _physics_process(delta: float) -> void:
 		_was_below_world = false
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R:
-		_respawn(false)
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		if event.keycode == KEY_SPACE or event.physical_keycode == KEY_SPACE:
+			_space_down = event.pressed
+		if event.pressed and not event.echo and event.keycode == KEY_R:
+			_respawn(false)
 
 
 func _read_movement_input() -> Vector3:
@@ -189,6 +193,7 @@ func _launch_bounce(input_direction: Vector3) -> void:
 	var forward_power := lerpf(min_launch_forward, max_launch_forward, ratio)
 	var upward_power := lerpf(min_launch_up, max_launch_up, ratio)
 
+	floor_snap_length = 0.0
 	visual.rotation.y = atan2(launch_direction.x, launch_direction.z)
 	velocity.x = launch_direction.x * forward_power
 	velocity.z = launch_direction.z * forward_power
@@ -221,6 +226,7 @@ func apply_spring_boost(upward_power: float = 17.0, forward_power: float = 4.0) 
 
 
 func _begin_butt_landing() -> void:
+	floor_snap_length = 0.22
 	_bounce_in_air = false
 	_charging = false
 	_charge_time = 0.0
@@ -229,12 +235,19 @@ func _begin_butt_landing() -> void:
 	charge_updated.emit(0.0)
 
 
+func take_hazard_hit() -> void:
+	# Called by rooftop hazard Area3D nodes.
+	_respawn(true)
+
+
 func set_checkpoint(position: Vector3) -> void:
 	_checkpoint_position = position + Vector3.UP * 1.0
 	_checkpoint_active = true
 
 
 func _respawn(play_fail: bool) -> void:
+	floor_snap_length = 0.22
+	_space_down = false
 	global_position = _checkpoint_position if _checkpoint_active else _spawn_position
 	velocity = Vector3.ZERO
 	_charging = false
@@ -255,6 +268,8 @@ func _respawn(play_fail: bool) -> void:
 func _build_character_rig() -> void:
 	_rig_root = Node3D.new()
 	_rig_root.name = "AnimatedCharacterRig"
+	_rig_root.scale = Vector3(0.72, 0.72, 0.72)
+	_rig_root.position.y = 0.32
 	visual.add_child(_rig_root)
 
 	var skin_material := _make_material(SKIN)
@@ -507,7 +522,7 @@ func _apply_idle_pose(blend: float) -> void:
 	_set_rotation(_left_knee, Vector3.ZERO, blend)
 	_set_rotation(_right_knee, Vector3.ZERO, blend)
 
-	_rig_root.position.y = lerpf(_rig_root.position.y, 0.012 * sin(_animation_time * 2.0), blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, 0.32 + 0.012 * sin(_animation_time * 2.0), blend)
 
 
 func _apply_walk_pose(speed: float, blend: float) -> void:
@@ -528,7 +543,7 @@ func _apply_walk_pose(speed: float, blend: float) -> void:
 
 	_set_rotation(_torso_pivot, Vector3(-0.10, 0.0, 0.0), blend)
 	_set_rotation(_head_pivot, Vector3(0.04, 0.0, 0.0), blend)
-	_rig_root.position.y = lerpf(_rig_root.position.y, 0.0, blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, 0.32, blend)
 
 
 func _apply_jump_pose(blend: float) -> void:
@@ -548,7 +563,7 @@ func _apply_jump_pose(blend: float) -> void:
 
 	_set_rotation(_torso_pivot, Vector3(-0.12, 0.0, 0.0), blend)
 	_set_rotation(_head_pivot, Vector3(0.04, 0.0, 0.0), blend)
-	_rig_root.position.y = lerpf(_rig_root.position.y, 0.02, blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, 0.34 + 0.025 * sin(_animation_time * 7.5), blend)
 
 
 func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
@@ -571,7 +586,7 @@ func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	_set_rotation(_left_elbow, Vector3(-0.70 * sit, 0.0, 0.0), blend)
 	_set_rotation(_right_elbow, Vector3(-0.70 * sit, 0.0, 0.0), blend)
 
-	_rig_root.position.y = lerpf(_rig_root.position.y, -0.23 * sit, blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.32, 0.16, sit), blend)
 
 
 func _set_rotation(node: Node3D, target: Vector3, blend: float) -> void:
