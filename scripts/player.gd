@@ -16,10 +16,10 @@ signal player_fell
 @export var ground_braking: float = 70.0
 @export var air_steering: float = 13.0
 @export var air_braking: float = 10.0
-@export var butt_landing_duration: float = 0.95
+@export var butt_landing_duration: float = 0.38
 
 @onready var visual: Node3D = $Visual
-@onready var launch_audio: AudioStreamPlayer = $LaunchAudio
+@onready var fart_audio: AudioStreamPlayer = $LaunchAudio
 @onready var fail_audio: AudioStreamPlayer = $FailAudio
 @onready var source_character: Node3D = $Visual/ParkourCharacter
 
@@ -36,6 +36,8 @@ var _was_below_world := false
 var _bounce_in_air := false
 var _has_left_floor_since_bounce := false
 var _landing_timer := 0.0
+var _impact_hold_timer := 0.0
+var _bounce_charge_ratio := 0.0
 var _animation_time := 0.0
 
 # A lightweight articulated replacement rig is generated because the supplied
@@ -65,10 +67,6 @@ const EYE := Color(0.035, 0.025, 0.02)
 func _ready() -> void:
 	global_position = _spawn_position
 	visual.rotation.y = atan2(_last_direction.x, _last_direction.z)
-
-	# Keep the original model in the project as the source asset, but do not
-	# render it because it is unrigged and has the stiff airplane-arm pose.
-	source_character.visible = false
 	_build_character_rig()
 
 
@@ -87,12 +85,14 @@ func _physics_process(delta: float) -> void:
 			velocity.y = minf(velocity.y, 0.0)
 
 		if _landing_timer > 0.0:
-			# Briefly finish the butt landing and stand-up recovery before
-			# accepting movement or another bounce charge.
+			# Hold the seated impact for a split second, then fart-bounce forward.
 			velocity.x = move_toward(velocity.x, 0.0, ground_braking * delta)
 			velocity.z = move_toward(velocity.z, 0.0, ground_braking * delta)
 			_charging = false
 			_charge_time = 0.0
+			_impact_hold_timer = maxf(_impact_hold_timer - delta, 0.0)
+			if _impact_hold_timer <= 0.0 and not _bounce_in_air:
+				_launch_impact_bounce()
 			charge_updated.emit(0.0)
 
 		elif charge_held:
@@ -201,6 +201,7 @@ func _read_movement_input() -> Vector3:
 
 func _launch_bounce(input_direction: Vector3) -> void:
 	var ratio := clampf(_charge_time / max_charge_time, 0.0, 1.0)
+	_bounce_charge_ratio = ratio
 	var launch_direction := (
 		input_direction.normalized()
 		if input_direction.length_squared() > 0.001
@@ -208,13 +209,14 @@ func _launch_bounce(input_direction: Vector3) -> void:
 	)
 
 	if launch_direction.length_squared() < 0.001:
-		launch_direction = Vector3(0, 0, -1)
+		launch_direction = Vector3(0.0, 0.0, -1.0)
 
 	var forward_power := lerpf(min_launch_forward, max_launch_forward, ratio)
 	var upward_power := lerpf(min_launch_up, max_launch_up, ratio)
 
 	floor_snap_length = 0.0
 	visual.rotation.y = atan2(launch_direction.x, launch_direction.z)
+	_last_direction = launch_direction
 	velocity.x = launch_direction.x * forward_power
 	velocity.z = launch_direction.z * forward_power
 	velocity.y = upward_power
@@ -224,10 +226,29 @@ func _launch_bounce(input_direction: Vector3) -> void:
 	_bounce_in_air = true
 	_has_left_floor_since_bounce = false
 	_landing_timer = 0.0
+	_impact_hold_timer = 0.0
 	charge_updated.emit(0.0)
+	bounce_launched.emit()
 
-	launch_audio.stop()
-	launch_audio.play()
+
+func _launch_impact_bounce() -> void:
+	# Rebound in the last steered direction. Longer initial charges create
+	# a stronger forward pop after each butt-first impact.
+	var direction := _last_direction
+	if direction.length_squared() < 0.001:
+		direction = -visual.global_transform.basis.z
+	direction.y = 0.0
+	direction = direction.normalized()
+
+	var forward_power := lerpf(8.5, 14.0, _bounce_charge_ratio)
+	var upward_power := lerpf(9.0, 12.5, _bounce_charge_ratio)
+
+	floor_snap_length = 0.0
+	velocity.x = direction.x * forward_power
+	velocity.z = direction.z * forward_power
+	velocity.y = upward_power
+	_bounce_in_air = true
+	_has_left_floor_since_bounce = false
 	bounce_launched.emit()
 
 
@@ -243,18 +264,21 @@ func apply_spring_boost(upward_power: float = 17.0, forward_power: float = 4.0) 
 	_landing_timer = 0.0
 	charge_updated.emit(0.0)
 
-	launch_audio.stop()
-	launch_audio.play()
 	bounce_launched.emit()
 
 
 func _begin_butt_landing() -> void:
-	floor_snap_length = 0.22
+	# The supplied LaunchAudio stream is the fart sound: play it on contact,
+	# not when the character first leaves the roof.
+	fart_audio.stop()
+	fart_audio.play()
+	floor_snap_length = 0.0
 	_bounce_in_air = false
 	_has_left_floor_since_bounce = false
 	_charging = false
 	_charge_time = 0.0
 	_landing_timer = butt_landing_duration
+	_impact_hold_timer = 0.14
 	velocity.y = 0.0
 	charge_updated.emit(0.0)
 
@@ -280,6 +304,8 @@ func _respawn(play_fail: bool) -> void:
 	_bounce_in_air = false
 	_has_left_floor_since_bounce = false
 	_landing_timer = 0.0
+	_impact_hold_timer = 0.0
+	_bounce_charge_ratio = 0.0
 	charge_updated.emit(0.0)
 
 	if play_fail:
@@ -292,79 +318,56 @@ func _respawn(play_fail: bool) -> void:
 # ---------------------------------------------------------------------------
 
 func _build_character_rig() -> void:
-	_rig_root = Node3D.new()
-	_rig_root.name = "AnimatedCharacterRig"
-	_rig_root.scale = Vector3(0.72, 0.72, 0.72)
-	_rig_root.position.y = 0.32
-	visual.add_child(_rig_root)
+	# Use the character scene uploaded for this project instead of the old
+	# procedural capsule-person replacement.
+	_rig_root = source_character
+	_rig_root.visible = true
+	_rig_root.position = Vector3(0.0, 0.94, 0.0)
+	_rig_root.rotation = Vector3.ZERO
+	_rig_root.scale = Vector3.ONE * 0.82
 
-	var skin_material := _make_material(SKIN)
-	var shirt_material := _make_material(SHIRT)
-	var shirt_light_material := _make_material(SHIRT_LIGHT)
-	var pants_material := _make_material(PANTS)
-	var pants_light_material := _make_material(PANTS_LIGHT)
-	var shoe_material := _make_material(SHOE)
-	var sole_material := _make_material(SHOE_SOLE)
-	var hair_material := _make_material(HAIR)
-	var eye_material := _make_material(EYE)
+	# This uploaded model is a grouped scene rather than a skeleton. Its
+	# complete body can still tilt together for a seated butt-bounce.
+	_torso_pivot = null
+	_head_pivot = null
+	_left_shoulder = null
+	_right_shoulder = null
+	_left_elbow = null
+	_right_elbow = null
+	_left_hip = null
+	_right_hip = null
+	_left_knee = null
+	_right_knee = null
 
-	# Pelvis and torso.
-	var pelvis := _make_sphere(_rig_root, "Pelvis", 0.30, 0.38, pants_material)
-	pelvis.position = Vector3(0.0, 0.72, 0.0)
-	pelvis.scale = Vector3(1.05, 0.85, 0.92)
-
-	_torso_pivot = Node3D.new()
-	_torso_pivot.name = "TorsoPivot"
-	_torso_pivot.position = Vector3(0.0, 1.12, 0.0)
-	_rig_root.add_child(_torso_pivot)
-
-	var torso := _make_capsule(_torso_pivot, "ShirtBody", 0.32, 0.88, shirt_material)
-	torso.position = Vector3(0.0, 0.10, 0.0)
-	torso.scale = Vector3(1.0, 1.0, 0.82)
-
-	var shirt_panel := _make_sphere(_torso_pivot, "ShirtFrontPanel", 0.20, 0.46, shirt_light_material)
-	shirt_panel.position = Vector3(0.0, 0.12, 0.245)
-	shirt_panel.scale = Vector3(0.92, 1.0, 0.20)
-
-	var neck := _make_capsule(_torso_pivot, "Neck", 0.12, 0.24, skin_material)
-	neck.position = Vector3(0.0, 0.59, 0.0)
-
-	# Head and a simple readable face looking toward local +Z.
-	_head_pivot = Node3D.new()
-	_head_pivot.name = "HeadPivot"
-	_head_pivot.position = Vector3(0.0, 1.76, 0.02)
-	_rig_root.add_child(_head_pivot)
-
-	var head := _make_sphere(_head_pivot, "Head", 0.31, 0.68, skin_material)
-	head.scale = Vector3(0.94, 1.0, 0.90)
-
-	var hair := _make_sphere(_head_pivot, "Hair", 0.30, 0.32, hair_material)
-	hair.position = Vector3(0.0, 0.24, -0.045)
-	hair.scale = Vector3(1.02, 0.57, 0.98)
-
-	for side in [-1.0, 1.0]:
-		var ear := _make_sphere(_head_pivot, "Ear", 0.095, 0.15, skin_material)
-		ear.position = Vector3(side * 0.285, 0.015, 0.0)
-
-		var eye_white := _make_sphere(_head_pivot, "EyeWhite", 0.055, 0.07, _make_material(Color.WHITE))
-		eye_white.position = Vector3(side * 0.105, 0.045, 0.263)
-
-		var pupil := _make_sphere(_head_pivot, "Pupil", 0.025, 0.035, eye_material)
-		pupil.position = Vector3(side * 0.105, 0.04, 0.315)
-
-	var nose := _make_sphere(_head_pivot, "Nose", 0.045, 0.055, skin_material)
-	nose.position = Vector3(0.0, -0.035, 0.30)
-
-	# Arms are two-segment articulated limbs. The default pose hangs down
-	# beside the torso instead of sticking straight out like airplane wings.
-	_left_shoulder = _make_arm(-1.0, skin_material, shirt_material)
-	_right_shoulder = _make_arm(1.0, skin_material, shirt_material)
-
-	# Legs with independent hips and knees for a walk cycle and seated pose.
-	_left_hip = _make_leg(-1.0, pants_material, pants_light_material, shoe_material, sole_material)
-	_right_hip = _make_leg(1.0, pants_material, pants_light_material, shoe_material, sole_material)
-
+	_style_uploaded_character()
 	_update_character_animation(0.0, Vector3.ZERO)
+
+
+func _style_uploaded_character() -> void:
+	for mesh_value in source_character.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := mesh_value as MeshInstance3D
+		if mesh_instance == null:
+			continue
+
+		var part_name := String(mesh_instance.name).to_lower()
+		var tint := Color(0.22, 0.72, 0.84)
+		if part_name == "body":
+			tint = Color(0.20, 0.74, 0.88)
+		elif part_name == "butt" or part_name == "butt2":
+			tint = Color(1.0, 0.48, 0.32)
+		elif part_name == "eye1" or part_name == "eye2" or part_name == "mouth":
+			tint = Color(0.035, 0.055, 0.075)
+		elif part_name == "leg1" or part_name == "meshinstance3d" or part_name == "meshinstance3d2":
+			tint = Color(0.13, 0.19, 0.29)
+		elif part_name.begins_with("finger"):
+			tint = Color(0.95, 0.67, 0.43)
+		elif part_name == "hand1" or part_name == "hand2":
+			tint = Color(0.18, 0.61, 0.75)
+
+		var material := StandardMaterial3D.new()
+		material.albedo_color = tint
+		material.roughness = 0.72
+		mesh_instance.material_override = material
 
 
 func _make_arm(side: float, skin_material: StandardMaterial3D, sleeve_material: StandardMaterial3D) -> Node3D:
@@ -550,7 +553,7 @@ func _apply_idle_pose(blend: float) -> void:
 
 	# Stand upright when idle.
 	_rig_root.rotation.x = lerp_angle(_rig_root.rotation.x, 0.0, blend)
-	_rig_root.position.y = lerpf(_rig_root.position.y, 0.32 + 0.012 * sin(_animation_time * 2.0), blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, 0.94 + 0.012 * sin(_animation_time * 2.0), blend)
 
 
 func _apply_walk_pose(speed: float, blend: float) -> void:
@@ -572,7 +575,7 @@ func _apply_walk_pose(speed: float, blend: float) -> void:
 	_set_rotation(_torso_pivot, Vector3(-0.10, 0.0, 0.0), blend)
 	_set_rotation(_head_pivot, Vector3(0.04, 0.0, 0.0), blend)
 	_rig_root.rotation.x = lerp_angle(_rig_root.rotation.x, 0.0, blend)
-	_rig_root.position.y = lerpf(_rig_root.position.y, 0.32, blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, 0.94, blend)
 
 
 func _apply_jump_pose(blend: float) -> void:
@@ -597,7 +600,7 @@ func _apply_jump_pose(blend: float) -> void:
 	# Rotate the entire rig backward into a seated airborne posture. The
 	# hidden physics capsule stays upright, but the visible body is butt-first.
 	_rig_root.rotation.x = lerp_angle(_rig_root.rotation.x, -1.10, blend)
-	_rig_root.position.y = lerpf(_rig_root.position.y, 0.02 + 0.018 * sin(_animation_time * 6.8), blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, 0.40 + 0.018 * sin(_animation_time * 6.8), blend)
 
 func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	var sit := clampf(weight, 0.0, 1.0)
@@ -622,7 +625,7 @@ func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	# Tilt the whole character backward so the backside is the lowest point
 	# during charge and impact, then rise smoothly as the sit weight fades.
 	_rig_root.rotation.x = lerp_angle(_rig_root.rotation.x, -1.10 * sit, blend)
-	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.32, -0.10, sit), blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.94, 0.35, sit), blend)
 
 
 func _set_rotation(node: Node3D, target: Vector3, blend: float) -> void:
