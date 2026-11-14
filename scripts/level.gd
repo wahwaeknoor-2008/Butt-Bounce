@@ -16,10 +16,18 @@ var _detail_time := 0.0
 var _rotating_details: Array[Node3D] = []
 var _warning_lights: Array[OmniLight3D] = []
 
+var _camera_yaw := PI
+var _camera_pitch := 0.34
+var _camera_distance := 10.0
+var _mouse_sensitivity := 0.003
+var _min_camera_distance := 5.0
+var _max_camera_distance := 16.0
+
 
 func _ready() -> void:
 	world = WORLD_SCENE.instantiate()
 	add_child(world)
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_upgrade_rooftop_environment()
 	_add_rooftop_details()
 	_add_extra_rooftop_challenges()
@@ -28,6 +36,8 @@ func _ready() -> void:
 	add_child(player)
 	var start_marker: Marker3D = world.get_node("Markers/PlayerStart")
 	player.global_position = start_marker.global_position + Vector3(0.0, 0.95, 0.0)
+	_camera_yaw = player.visual.rotation.y
+	player.set_camera_yaw(_camera_yaw)
 	player.player_fell.connect(_on_player_fell)
 	player.charge_updated.connect(_on_charge_updated)
 	player.bounce_launched.connect(_on_bounce_launched)
@@ -35,6 +45,30 @@ func _ready() -> void:
 	_create_hud()
 	var goal: Area3D = world.get_node("Markers/GoalZone")
 	goal.body_entered.connect(_on_goal_entered)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		_camera_yaw -= event.relative.x * _mouse_sensitivity
+		_camera_pitch = clampf(
+			_camera_pitch - event.relative.y * _mouse_sensitivity,
+			-0.28,
+			0.88
+		)
+	elif event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_camera_distance = maxf(_min_camera_distance, _camera_distance - 0.8)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_camera_distance = minf(_max_camera_distance, _camera_distance + 0.8)
+		elif Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	elif event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			Input.mouse_mode = (
+				Input.MOUSE_MODE_VISIBLE
+				if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+				else Input.MOUSE_MODE_CAPTURED
+			)
 
 
 func _process(delta: float) -> void:
@@ -47,18 +81,21 @@ func _process(delta: float) -> void:
 	for warning_light in _warning_lights:
 		warning_light.light_energy = 0.65 + 0.45 * (0.5 + 0.5 * sin(_detail_time * 3.2))
 
-	var facing := player.visual.global_transform.basis.z
-	facing.y = 0.0
-	if facing.length_squared() < 0.001:
-		facing = Vector3(0.0, 0.0, -1.0)
-	else:
-		facing = facing.normalized()
-
-	# Keep the camera behind the character's actual heading, not behind a
-	# fixed world-space direction. This follows turns and reverse travel.
-	var target := player.global_position - facing * 10.0 + Vector3.UP * 4.2
-	camera.global_position = camera.global_position.lerp(target, 1.0 - exp(-8.0 * delta))
-	camera.look_at(player.global_position + Vector3.UP * 0.85 + facing * 1.1, Vector3.UP)
+	player.set_camera_yaw(_camera_yaw)
+	var target := player.global_position + Vector3.UP * 0.9
+	var horizontal_distance := _camera_distance * cos(_camera_pitch)
+	var vertical_distance := _camera_distance * sin(_camera_pitch)
+	var camera_offset := Vector3(
+		-sin(_camera_yaw) * horizontal_distance,
+		vertical_distance,
+		-cos(_camera_yaw) * horizontal_distance
+	)
+	var desired_camera_position := target + camera_offset
+	camera.global_position = camera.global_position.lerp(
+		desired_camera_position,
+		1.0 - exp(-10.0 * delta)
+	)
+	camera.look_at(target, Vector3.UP)
 	var travelled := int(maxf(0.0, -player.global_position.z))
 	distance_label.text = "ROOFTOP RUN   •   %dm" % travelled
 
@@ -300,11 +337,17 @@ func _create_camera() -> void:
 	camera.fov = 68.0
 	add_child(camera)
 	camera.current = true
-	var facing := player.visual.global_transform.basis.z
-	facing.y = 0.0
-	facing = facing.normalized()
-	camera.global_position = player.global_position - facing * 10.0 + Vector3.UP * 4.2
-	camera.look_at(player.global_position + Vector3.UP * 0.85 + facing * 1.1, Vector3.UP)
+	_camera_yaw = player.visual.rotation.y
+	var target := player.global_position + Vector3.UP * 0.9
+	var horizontal_distance := _camera_distance * cos(_camera_pitch)
+	var vertical_distance := _camera_distance * sin(_camera_pitch)
+	var camera_offset := Vector3(
+		-sin(_camera_yaw) * horizontal_distance,
+		vertical_distance,
+		-cos(_camera_yaw) * horizontal_distance
+	)
+	camera.global_position = target + camera_offset
+	camera.look_at(target, Vector3.UP)
 
 
 func _create_hud() -> void:
@@ -334,6 +377,10 @@ func _create_hud() -> void:
 	message_label = Label.new()
 	message_label.text = "WASD / ARROWS: MOVE    •    HOLD SPACE: CHARGE"
 	column.add_child(message_label)
+	var camera_help := Label.new()
+	camera_help.text = "MOUSE: LOOK  •  WHEEL: ZOOM  •  ESC: RELEASE MOUSE"
+	camera_help.add_theme_font_size_override("font_size", 12)
+	column.add_child(camera_help)
 
 
 func _on_charge_updated(amount: float) -> void:
