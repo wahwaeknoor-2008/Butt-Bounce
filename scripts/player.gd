@@ -597,7 +597,7 @@ func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	_set_rotation(_left_elbow, Vector3(-0.70 * sit, 0.0, 0.0), blend)
 	_set_rotation(_right_elbow, Vector3(-0.70 * sit, 0.0, 0.0), blend)
 
-	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.32, -0.18, sit), blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.32, -0.55, sit), blend)
 
 
 func _set_rotation(node: Node3D, target: Vector3, blend: float) -> void:
