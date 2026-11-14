@@ -375,7 +375,7 @@ func _create_hud() -> void:
 	charge_bar.show_percentage = false
 	column.add_child(charge_bar)
 	message_label = Label.new()
-	message_label.text = "WASD / ARROWS: MOVE    •    HOLD SPACE: CHARGE"
+	message_label.text = "WASD / ARROWS: MOVE  •  HOLD SPACE / LEFT CLICK: CHARGE"
 	column.add_child(message_label)
 	var camera_help := Label.new()
 	camera_help.text = "MOUSE: LOOK  •  WHEEL: ZOOM  •  ESC: RELEASE MOUSE"
@@ -390,9 +390,9 @@ func _on_charge_updated(amount: float) -> void:
 		if amount >= 0.98:
 			message_label.text = "FULL CHARGE!  RELEASE SPACE TO LAUNCH!"
 		elif amount > 0.02:
-			message_label.text = "CHARGING BOUNCE..."
+			message_label.text = "CHARGING... RELEASE SPACE / LEFT CLICK TO BOUNCE!"
 		else:
-			message_label.text = "WASD / ARROWS: MOVE  •  HOLD SPACE: CHARGE"
+			message_label.text = "WASD / ARROWS: MOVE  •  HOLD SPACE / LEFT CLICK: CHARGE"
 
 
 func _on_bounce_launched() -> void:
