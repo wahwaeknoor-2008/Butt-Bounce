@@ -10,6 +10,7 @@ extends AnimatableBody3D
 var _origin: Vector3
 var _time := 0.0
 var _crumble_timer := -1.0
+var _home_visible := true
 var _spring_cooldown := 0.0
 
 
