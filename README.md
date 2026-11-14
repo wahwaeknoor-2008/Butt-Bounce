@@ -95,3 +95,8 @@ This is an early playable prototype. The current character animation update is c
 The rooftop route now includes additional moving transfer platforms and swinging wrecking-ball hazards. Existing crumble and spring pads activate when the player touches them. The environment adds animated extractor fans, rooftop pipework, exhaust vents, warning beacons, safety rails, softer sky ambient lighting, and reduced distance fog.
 
 **Bounce controls:** hold Space to crouch and charge; release Space to launch. Use WASD or the arrow keys to steer. Touching a swinging ball sends the player back to the checkpoint.
+
+
+## Coin collection
+
+The 27 rooftop coins are collectible. Touch a coin with the player to collect it; the coin disappears, a floating `+1` pickup indicator appears, and the top-right HUD counter updates. Coins spin and hover to make them easier to spot.
