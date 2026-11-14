@@ -25,6 +25,7 @@ signal player_fell
 
 var _charging := false
 var _space_down := false
+var _left_mouse_down := false
 var _charge_time := 0.0
 var _last_direction := Vector3(0, 0, -1)
 var _camera_yaw := PI
@@ -79,7 +80,7 @@ func _physics_process(delta: float) -> void:
 		_last_direction = input_dir.normalized()
 
 	var was_on_floor := is_on_floor()
-	var charge_held := _space_down
+	var charge_held := _space_down or _left_mouse_down
 
 	if was_on_floor:
 		if not _bounce_in_air:
@@ -168,6 +169,13 @@ func _input(event: InputEvent) -> void:
 			_space_down = event.pressed
 		if event.pressed and not event.echo and event.keycode == KEY_R:
 			_respawn(false)
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		# Only begin charging when the cursor is captured for gameplay.
+		# Always clear on release, even if the cursor mode changed meanwhile.
+		if event.pressed:
+			_left_mouse_down = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+		else:
+			_left_mouse_down = false
 
 
 func set_camera_yaw(yaw: float) -> void:
@@ -264,6 +272,7 @@ func set_checkpoint(position: Vector3) -> void:
 func _respawn(play_fail: bool) -> void:
 	floor_snap_length = 0.22
 	_space_down = false
+	_left_mouse_down = false
 	global_position = _checkpoint_position if _checkpoint_active else _spawn_position
 	velocity = Vector3.ZERO
 	_charging = false
