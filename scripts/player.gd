@@ -62,6 +62,7 @@ const EYE := Color(0.035, 0.025, 0.02)
 
 func _ready() -> void:
 	global_position = _spawn_position
+	visual.rotation.y = atan2(_last_direction.x, _last_direction.z)
 
 	# Keep the original model in the project as the source asset, but do not
 	# render it because it is unrigged and has the stiff airplane-arm pose.
@@ -556,24 +557,25 @@ func _apply_walk_pose(speed: float, blend: float) -> void:
 
 
 func _apply_jump_pose(blend: float) -> void:
-	var air_cycle := sin(_animation_time * 7.5)
+	var air_cycle := sin(_animation_time * 6.8)
 
-	# Keep the arms bent and pumping; tuck the knees instead of spreading
-	# the arms horizontally like airplane wings.
-	_set_rotation(_left_shoulder, Vector3(-0.78 + air_cycle * 0.12, 0.0, -0.10), blend)
-	_set_rotation(_right_shoulder, Vector3(-0.78 - air_cycle * 0.12, 0.0, 0.10), blend)
-	_set_rotation(_left_elbow, Vector3(-0.85, 0.0, 0.0), blend)
-	_set_rotation(_right_elbow, Vector3(-0.85, 0.0, 0.0), blend)
+	# Stay seated throughout the bounce: thighs project forward, shins fold
+	# forward from the knees, and the chest leans back so the backside leads.
+	_set_rotation(_torso_pivot, Vector3(-0.52, 0.0, 0.0), blend)
+	_set_rotation(_head_pivot, Vector3(0.16, 0.0, 0.0), blend)
 
-	_set_rotation(_left_hip, Vector3(-0.55 + air_cycle * 0.10, 0.0, 0.0), blend)
-	_set_rotation(_right_hip, Vector3(-0.55 - air_cycle * 0.10, 0.0, 0.0), blend)
-	_set_rotation(_left_knee, Vector3(0.82, 0.0, 0.0), blend)
-	_set_rotation(_right_knee, Vector3(0.82, 0.0, 0.0), blend)
+	_set_rotation(_left_hip, Vector3(-1.34 + air_cycle * 0.07, 0.0, 0.0), blend)
+	_set_rotation(_right_hip, Vector3(-1.34 - air_cycle * 0.07, 0.0, 0.0), blend)
+	_set_rotation(_left_knee, Vector3(0.62 + maxf(0.0, air_cycle) * 0.12, 0.0, 0.0), blend)
+	_set_rotation(_right_knee, Vector3(0.62 + maxf(0.0, -air_cycle) * 0.12, 0.0, 0.0), blend)
 
-	_set_rotation(_torso_pivot, Vector3(-0.12, 0.0, 0.0), blend)
-	_set_rotation(_head_pivot, Vector3(0.04, 0.0, 0.0), blend)
-	_rig_root.position.y = lerpf(_rig_root.position.y, 0.34 + 0.025 * sin(_animation_time * 7.5), blend)
+	# Arms reach forward for balance rather than spreading sideways.
+	_set_rotation(_left_shoulder, Vector3(-0.92 + air_cycle * 0.08, 0.0, -0.08), blend)
+	_set_rotation(_right_shoulder, Vector3(-0.92 - air_cycle * 0.08, 0.0, 0.08), blend)
+	_set_rotation(_left_elbow, Vector3(-0.52, 0.0, 0.0), blend)
+	_set_rotation(_right_elbow, Vector3(-0.52, 0.0, 0.0), blend)
 
+	_rig_root.position.y = lerpf(_rig_root.position.y, -0.06 + 0.018 * sin(_animation_time * 6.8), blend)
 
 func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	var sit := clampf(weight, 0.0, 1.0)
@@ -583,10 +585,10 @@ func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	_set_rotation(_torso_pivot, Vector3(-0.16 * sit, 0.0, 0.0), blend)
 	_set_rotation(_head_pivot, Vector3(0.08 * sit, 0.0, 0.0), blend)
 
-	_set_rotation(_left_hip, Vector3(-1.08 * sit, 0.0, 0.0), blend)
-	_set_rotation(_right_hip, Vector3(-1.08 * sit, 0.0, 0.0), blend)
-	_set_rotation(_left_knee, Vector3(1.30 * sit, 0.0, 0.0), blend)
-	_set_rotation(_right_knee, Vector3(1.30 * sit, 0.0, 0.0), blend)
+	_set_rotation(_left_hip, Vector3(-1.34 * sit, 0.0, 0.0), blend)
+	_set_rotation(_right_hip, Vector3(-1.34 * sit, 0.0, 0.0), blend)
+	_set_rotation(_left_knee, Vector3(0.62 * sit, 0.0, 0.0), blend)
+	_set_rotation(_right_knee, Vector3(0.62 * sit, 0.0, 0.0), blend)
 
 	# Hands move forward for balance, with elbows bent.
 	var arm_reach := 0.65 + 0.16 * charge_ratio
