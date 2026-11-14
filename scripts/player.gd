@@ -27,6 +27,7 @@ var _charging := false
 var _space_down := false
 var _charge_time := 0.0
 var _last_direction := Vector3(0, 0, -1)
+var _camera_yaw := PI
 var _spawn_position := Vector3(0, 1.05, 4.0)
 var _checkpoint_position := Vector3(0, 1.05, 4.0)
 var _checkpoint_active := false
@@ -169,6 +170,10 @@ func _input(event: InputEvent) -> void:
 			_respawn(false)
 
 
+func set_camera_yaw(yaw: float) -> void:
+	_camera_yaw = yaw
+
+
 func _read_movement_input() -> Vector3:
 	var direction := Vector3.ZERO
 
@@ -181,7 +186,9 @@ func _read_movement_input() -> Vector3:
 	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 		direction.x += 1.0
 
-	return direction.normalized() if direction.length_squared() > 1.0 else direction
+	if direction.length_squared() > 1.0:
+		direction = direction.normalized()
+	return direction.rotated(Vector3.UP, _camera_yaw - PI)
 
 
 func _launch_bounce(input_direction: Vector3) -> void:
