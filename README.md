@@ -1,106 +1,27 @@
-# BUTT BOUNCE — Rooftop Rush
+# &#x20;BUTT BOUNCE – Rooftop Rush
 
-A 3D rooftop parkour prototype built with **Godot 4** and GDScript.
+## About the Game
 
-Charge a butt-bounce, launch across rooftops, steer through the air, hit spring platforms, avoid hazards, and reach the goal.
+A goofy 3D platformer where you charge your bounce, launch across rooftops, dodge hazards, and collect coins. How far can you make it without falling?
 
-## Getting started
+## How to Play & Controls
 
-1. Install Godot 4 (the project was previously developed with Godot 4.7.2).
-2. Download or clone this repository.
-3. Open Godot Project Manager and choose **Import**.
-4. Select the repository's `project.godot` file.
-5. Open the project, wait for Godot to import the 3D and audio assets, and press **F5** to run the main scene.
+- **W / A / S / D** – Move
+- **Mouse** – Look around
+- **Hold SPACE** – Charge your bounce
+- **Release SPACE** – Launch!
+- **Left Mouse Button** – Charge and release your bounce
+- **Mouse Scroll** – Zoom in and out
+- **ESC** – Release or capture the mouse
 
-The configured main scene is `scenes/rooftop_rush.tscn`.
+## Play the Game
 
-## Controls
+[**Play BUTT BOUNCE – Rooftop Rush on itch.io**](https://spidervraj.itch.io/butt-bounce-rooftop-rush)
 
+## &#x20;Team & Credits
 
-| Input | Action |
-|---|---|
-| W / A / S / D | Move |
-| Mouse pointer | steer |
-| Hold Space or left mouse button | Sit down and charge the butt-bounce |
-| Release Space or left mouse button | Launch; longer charge gives a higher bounce |
-| R | Restart / respawn |
+- **Developers:** Eknoor Wadhwa & Vraj B. Khatri
+- **Game Engine:** Godot
+- **Platform:** itch.io
 
-After a bounce, the character lands on his butt and automatically stands up again.
-
-## Character animation
-
-The visible player uses the exact uploaded character scene at `assets/characters/butt_bouncer.tscn`. Its mesh geometry and materials are left untouched. The grouped mesh is tilted as a single piece during the seated bounce pose.
-
-- Hold Space or left mouse to charge one bounce
-- Release to launch forward and upward
-- On ground impact, the fart sound plays
-- The character stays seated briefly, then stands up; there is no automatic repeated rebound
-- WASD / arrow keys steer while moving or airborne
-
-## Project structure
-
-```text
-BUTT-BOUNCE-Rooftop-Rush/
-├── project.godot
-├── README.md
-├── LICENSE
-├── ASSET-LICENSING.md
-├── .gitignore
-├── scenes/
-│   ├── rooftop_rush.tscn
-│   ├── player.tscn
-│   └── world.tscn
-├── scripts/
-│   ├── level.gd
-│   ├── player.gd
-│   ├── platform.gd
-│   └── hazard.gd
-└── assets/
-    ├── audio/
-    │   ├── fail_sound.mp3
-    │   └── launch_fart.mp3
-    └── characters/
-        ├── parkour_character.glb
-        └── optional/
-```
-
-## Current prototype features
-
-- Third-person follow camera and in-game HUD
-- Ground movement with acceleration and braking
-- Hold-to-charge, release-to-launch bounce mechanic
-- Charge-time-based launch height
-- Air steering and air braking
-- Procedural idle, run, jump, sit, landing and stand-up poses
-- Butt-first landing and automatic recovery
-- Respawn and checkpoint support in the player controller
-- Launch and fail sound effects
-- Rooftop world scene, goal area, platforms and hazard script
-- Six additional unrigged character prototypes in `assets/characters/optional/`
-
-## Open source and assets
-
-The **project source code** is licensed under the MIT License; see `LICENSE`.
-
-The MIT license does **not** automatically cover the 3D models or audio files. Asset ownership and redistribution terms need to be confirmed separately before publicly redistributing those files. See `ASSET-LICENSING.md`.
-
-## Development status
-
-This is an early playable prototype. The current character animation update is code-driven and should be tested in Godot 4.7.2 for pose alignment, collisions, and timing before release.
-
-
-## Rooftop environment and obstacles
-
-The rooftop route now includes additional moving transfer platforms and swinging wrecking-ball hazards. Existing crumble and spring pads activate when the player touches them. The environment adds animated extractor fans, rooftop pipework, exhaust vents, warning beacons, safety rails, softer sky ambient lighting, and reduced distance fog.
-
-**Bounce controls:** hold Space to crouch and charge; release Space to launch. Use WASD or the arrow keys to steer. Touching a swinging ball sends the player back to the checkpoint.
-
-
-## Coin collection
-
-The 27 rooftop coins are collectible. Touch a coin with the player to collect it; the coin disappears, a floating `+1` pickup indicator appears, and the top-right HUD counter updates. Coins spin and hover to make them easier to spot.
-
-
-## Character colours and movement
-
-The uploaded character keeps its original geometry. The player script applies green to the body, red to both butt cheeks, blue to the legs, black to the shoes and eyes, and yellow to the hands. Small pivots animate the uploaded arm and leg meshes during walking, charging, jumping and landing. The fart audio skips the silent lead-in so it plays closer to the instant the player touches down.
+Created during a game jam. Thanks for playing! 💚
