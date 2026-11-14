@@ -160,28 +160,29 @@ func _check_coin_proximity() -> void:
 		return
 
 	# Backup pickup test: compare coins to the player's body height and
-	# horizontal position. This keeps pickups reliable even when the visible
-	# animated rig is offset from the upright CharacterBody3D capsule.
-	for coin in _coin_nodes.duplicate():
-		if not is_instance_valid(coin) or coin.has_meta("collected"):
+	# horizontal position. Explicit types are important here because duplicate()
+	# returns an untyped Array to the GDScript parser.
+	var coins_to_check: Array[Area3D] = _coin_nodes.duplicate()
+	for coin_value in coins_to_check:
+		var coin: Area3D = coin_value as Area3D
+		if coin == null or not is_instance_valid(coin) or coin.has_meta("collected"):
 			continue
 
-		var coin_position := coin.global_position
-		var player_position := player.global_position
-		var closest_body_height := clampf(
+		var coin_position: Vector3 = coin.global_position
+		var player_position: Vector3 = player.global_position
+		var closest_body_height: float = clampf(
 			coin_position.y,
 			player_position.y - 0.25,
 			player_position.y + 2.25
 		)
-		var horizontal_distance := Vector2(
+		var horizontal_distance: float = Vector2(
 			coin_position.x - player_position.x,
 			coin_position.z - player_position.z
 		).length()
-		var vertical_distance := absf(coin_position.y - closest_body_height)
+		var vertical_distance: float = absf(coin_position.y - closest_body_height)
 
 		if horizontal_distance <= 1.5 and vertical_distance <= 1.35:
 			_collect_coin(coin)
-
 
 func _collect_coin(coin: Area3D) -> void:
 	if not is_instance_valid(coin) or coin.has_meta("collected"):
