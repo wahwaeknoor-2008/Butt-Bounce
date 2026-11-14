@@ -316,8 +316,8 @@ func _build_character_rig() -> void:
 
 	# Arms are two-segment articulated limbs. The default pose hangs down
 	# beside the torso instead of sticking straight out like airplane wings.
-	_left_shoulder = _make_arm(side := -1.0, skin_material, shirt_material)
-	_right_shoulder = _make_arm(side := 1.0, skin_material, shirt_material)
+	_left_shoulder = _make_arm(-1.0, skin_material, shirt_material)
+	_right_shoulder = _make_arm(1.0, skin_material, shirt_material)
 
 	# Legs with independent hips and knees for a walk cycle and seated pose.
 	_left_hip = _make_leg(-1.0, pants_material, pants_light_material, shoe_material, sole_material)
