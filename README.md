@@ -20,8 +20,8 @@ The configured main scene is `scenes/rooftop_rush.tscn`.
 | Input | Action |
 |---|---|
 | W / A / S / D or arrow keys | Move and steer |
-| Hold Space | Sit down and charge the butt-bounce |
-| Release Space | Launch; longer charge gives a higher bounce |
+| Hold Space or left mouse button | Sit down and charge the butt-bounce |
+| Release Space or left mouse button | Launch; longer charge gives a higher bounce |
 | R | Restart / respawn |
 
 After a bounce, the character lands on his butt and automatically stands up again.
