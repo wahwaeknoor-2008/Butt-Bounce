@@ -27,16 +27,13 @@ After a bounce, the character lands on his butt and automatically stands up agai
 
 ## Character animation
 
-The visible player is currently a procedural, articulated character rig built in `scripts/player.gd`. The original `assets/characters/parkour_character.glb` is retained in the project as the source model, but it is hidden at runtime because that GLB is a single static mesh with no skeleton or animation clips.
+The visible player now uses the uploaded character scene at `assets/characters/butt_bouncer.tscn`. The model has a simple grouped mesh rather than a skeleton, so the whole character is tilted as one piece for the seated bounce pose.
 
-The procedural rig provides:
-- Relaxed arms hanging beside the body while idle
-- Alternating leg movement and counter-swinging arms while running
-- Bent arms and tucked legs while airborne
-- A seated pose while Space is held to charge
-- Butt-first landing and a timed stand-up recovery
-
-This is a code-driven prototype rig. It can be replaced later with a fully skinned Blender model and authored animation clips.
+- Hold Space or left mouse to charge the first bounce
+- Release to launch forward and upward
+- The character rotates backward into a butt-first airborne pose
+- On ground impact, the fart sound plays and the character automatically rebounds forward
+- WASD / arrow keys steer the next rebound direction
 
 ## Project structure
 
