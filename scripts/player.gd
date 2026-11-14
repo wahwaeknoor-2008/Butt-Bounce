@@ -548,6 +548,8 @@ func _apply_idle_pose(blend: float) -> void:
 	_set_rotation(_left_knee, Vector3.ZERO, blend)
 	_set_rotation(_right_knee, Vector3.ZERO, blend)
 
+	# Stand upright when idle.
+	_rig_root.rotation.x = lerp_angle(_rig_root.rotation.x, 0.0, blend)
 	_rig_root.position.y = lerpf(_rig_root.position.y, 0.32 + 0.012 * sin(_animation_time * 2.0), blend)
 
 
@@ -569,6 +571,7 @@ func _apply_walk_pose(speed: float, blend: float) -> void:
 
 	_set_rotation(_torso_pivot, Vector3(-0.10, 0.0, 0.0), blend)
 	_set_rotation(_head_pivot, Vector3(0.04, 0.0, 0.0), blend)
+	_rig_root.rotation.x = lerp_angle(_rig_root.rotation.x, 0.0, blend)
 	_rig_root.position.y = lerpf(_rig_root.position.y, 0.32, blend)
 
 
@@ -591,7 +594,10 @@ func _apply_jump_pose(blend: float) -> void:
 	_set_rotation(_left_elbow, Vector3(-0.52, 0.0, 0.0), blend)
 	_set_rotation(_right_elbow, Vector3(-0.52, 0.0, 0.0), blend)
 
-	_rig_root.position.y = lerpf(_rig_root.position.y, -0.06 + 0.018 * sin(_animation_time * 6.8), blend)
+	# Rotate the entire rig backward into a seated airborne posture. The
+	# hidden physics capsule stays upright, but the visible body is butt-first.
+	_rig_root.rotation.x = lerp_angle(_rig_root.rotation.x, -1.10, blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, 0.02 + 0.018 * sin(_animation_time * 6.8), blend)
 
 func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	var sit := clampf(weight, 0.0, 1.0)
@@ -613,7 +619,10 @@ func _apply_sit_pose(weight: float, charge_ratio: float, blend: float) -> void:
 	_set_rotation(_left_elbow, Vector3(-0.70 * sit, 0.0, 0.0), blend)
 	_set_rotation(_right_elbow, Vector3(-0.70 * sit, 0.0, 0.0), blend)
 
-	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.32, -0.55, sit), blend)
+	# Tilt the whole character backward so the backside is the lowest point
+	# during charge and impact, then rise smoothly as the sit weight fades.
+	_rig_root.rotation.x = lerp_angle(_rig_root.rotation.x, -1.10 * sit, blend)
+	_rig_root.position.y = lerpf(_rig_root.position.y, lerpf(0.32, -0.10, sit), blend)
 
 
 func _set_rotation(node: Node3D, target: Vector3, blend: float) -> void:
