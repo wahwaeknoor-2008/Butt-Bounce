@@ -245,7 +245,7 @@ func _begin_butt_landing() -> void:
 	# The MP3 begins with about 0.7 seconds of silence; skip that lead-in so
 	# the fart is heard immediately on the first physics frame of butt impact.
 	fart_audio.stop()
-	fart_audio.play(0.68)
+	fart_audio.play(0.74)
 	floor_snap_length = 0.22
 	_bounce_in_air = false
 	_has_left_floor_since_bounce = false
