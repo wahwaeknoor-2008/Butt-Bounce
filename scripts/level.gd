@@ -87,6 +87,9 @@ func _process(delta: float) -> void:
 	for warning_light in _warning_lights:
 		warning_light.light_energy = 0.65 + 0.45 * (0.5 + 0.5 * sin(_detail_time * 3.2))
 
+	# Check pickups independently of Area3D collision signals.
+	_check_coin_proximity()
+
 	# Coins spin and gently hover so players can recognize pickups from a distance.
 	for coin_index in range(_coin_nodes.size()):
 		var coin := _coin_nodes[coin_index]
@@ -131,6 +134,14 @@ func _setup_coin_collection() -> void:
 		coin.monitoring = true
 		coin.monitorable = true
 		coin.body_entered.connect(_on_coin_body_entered.bind(coin))
+
+		# Give the Area3D an independently-sized pickup volume, rather than
+		# relying on the decorative coin mesh dimensions.
+		var coin_shape := coin.get_node_or_null("Shape") as CollisionShape3D
+		if coin_shape != null and coin_shape.shape is SphereShape3D:
+			var pickup_shape := (coin_shape.shape as SphereShape3D).duplicate() as SphereShape3D
+			pickup_shape.radius = 1.05
+			coin_shape.shape = pickup_shape
 		_coin_nodes.append(coin)
 		_coin_base_heights[coin.get_instance_id()] = coin.position.y
 
@@ -139,9 +150,41 @@ func _setup_coin_collection() -> void:
 
 
 func _on_coin_body_entered(body: Node3D, coin: Area3D) -> void:
-	if body != player or not is_instance_valid(coin):
+	if body != player:
 		return
-	if coin.has_meta("collected"):
+	_collect_coin(coin)
+
+
+func _check_coin_proximity() -> void:
+	if player == null:
+		return
+
+	# Backup pickup test: compare coins to the player's body height and
+	# horizontal position. This keeps pickups reliable even when the visible
+	# animated rig is offset from the upright CharacterBody3D capsule.
+	for coin in _coin_nodes.duplicate():
+		if not is_instance_valid(coin) or coin.has_meta("collected"):
+			continue
+
+		var coin_position := coin.global_position
+		var player_position := player.global_position
+		var closest_body_height := clampf(
+			coin_position.y,
+			player_position.y - 0.25,
+			player_position.y + 2.25
+		)
+		var horizontal_distance := Vector2(
+			coin_position.x - player_position.x,
+			coin_position.z - player_position.z
+		).length()
+		var vertical_distance := absf(coin_position.y - closest_body_height)
+
+		if horizontal_distance <= 1.5 and vertical_distance <= 1.35:
+			_collect_coin(coin)
+
+
+func _collect_coin(coin: Area3D) -> void:
+	if not is_instance_valid(coin) or coin.has_meta("collected"):
 		return
 
 	coin.set_meta("collected", true)
@@ -149,6 +192,7 @@ func _on_coin_body_entered(body: Node3D, coin: Area3D) -> void:
 	coins_collected += 1
 	_update_coin_counter()
 	_show_coin_pickup(coin.global_position)
+	_coin_nodes.erase(coin)
 	coin.queue_free()
 
 
