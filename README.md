@@ -99,3 +99,8 @@ The rooftop route now includes additional moving transfer platforms and swinging
 ## Coin collection
 
 The 27 rooftop coins are collectible. Touch a coin with the player to collect it; the coin disappears, a floating `+1` pickup indicator appears, and the top-right HUD counter updates. Coins spin and hover to make them easier to spot.
+
+
+## Character colours and movement
+
+The uploaded character keeps its original geometry. The player script applies green to the body, red to both butt cheeks, blue to the legs, black to the shoes and eyes, and yellow to the hands. Small pivots animate the uploaded arm and leg meshes during walking, charging, jumping and landing. The fart audio skips the silent lead-in so it plays closer to the instant the player touches down.
