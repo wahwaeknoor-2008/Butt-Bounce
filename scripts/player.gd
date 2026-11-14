@@ -36,8 +36,6 @@ var _was_below_world := false
 var _bounce_in_air := false
 var _has_left_floor_since_bounce := false
 var _landing_timer := 0.0
-var _impact_hold_timer := 0.0
-var _bounce_charge_ratio := 0.0
 var _animation_time := 0.0
 
 # A lightweight articulated replacement rig is generated because the supplied
@@ -85,14 +83,11 @@ func _physics_process(delta: float) -> void:
 			velocity.y = minf(velocity.y, 0.0)
 
 		if _landing_timer > 0.0:
-			# Hold the seated impact for a split second, then fart-bounce forward.
+			# Finish the seated landing and stand-up recovery before taking input.
 			velocity.x = move_toward(velocity.x, 0.0, ground_braking * delta)
 			velocity.z = move_toward(velocity.z, 0.0, ground_braking * delta)
 			_charging = false
 			_charge_time = 0.0
-			_impact_hold_timer = maxf(_impact_hold_timer - delta, 0.0)
-			if _impact_hold_timer <= 0.0 and not _bounce_in_air:
-				_launch_impact_bounce()
 			charge_updated.emit(0.0)
 
 		elif charge_held:
@@ -201,7 +196,6 @@ func _read_movement_input() -> Vector3:
 
 func _launch_bounce(input_direction: Vector3) -> void:
 	var ratio := clampf(_charge_time / max_charge_time, 0.0, 1.0)
-	_bounce_charge_ratio = ratio
 	var launch_direction := (
 		input_direction.normalized()
 		if input_direction.length_squared() > 0.001
@@ -226,29 +220,7 @@ func _launch_bounce(input_direction: Vector3) -> void:
 	_bounce_in_air = true
 	_has_left_floor_since_bounce = false
 	_landing_timer = 0.0
-	_impact_hold_timer = 0.0
 	charge_updated.emit(0.0)
-	bounce_launched.emit()
-
-
-func _launch_impact_bounce() -> void:
-	# Rebound in the last steered direction. Longer initial charges create
-	# a stronger forward pop after each butt-first impact.
-	var direction := _last_direction
-	if direction.length_squared() < 0.001:
-		direction = -visual.global_transform.basis.z
-	direction.y = 0.0
-	direction = direction.normalized()
-
-	var forward_power := lerpf(8.5, 14.0, _bounce_charge_ratio)
-	var upward_power := lerpf(9.0, 12.5, _bounce_charge_ratio)
-
-	floor_snap_length = 0.0
-	velocity.x = direction.x * forward_power
-	velocity.z = direction.z * forward_power
-	velocity.y = upward_power
-	_bounce_in_air = true
-	_has_left_floor_since_bounce = false
 	bounce_launched.emit()
 
 
@@ -272,13 +244,12 @@ func _begin_butt_landing() -> void:
 	# not when the character first leaves the roof.
 	fart_audio.stop()
 	fart_audio.play()
-	floor_snap_length = 0.0
+	floor_snap_length = 0.22
 	_bounce_in_air = false
 	_has_left_floor_since_bounce = false
 	_charging = false
 	_charge_time = 0.0
 	_landing_timer = butt_landing_duration
-	_impact_hold_timer = 0.14
 	velocity.y = 0.0
 	charge_updated.emit(0.0)
 
@@ -304,8 +275,6 @@ func _respawn(play_fail: bool) -> void:
 	_bounce_in_air = false
 	_has_left_floor_since_bounce = false
 	_landing_timer = 0.0
-	_impact_hold_timer = 0.0
-	_bounce_charge_ratio = 0.0
 	charge_updated.emit(0.0)
 
 	if play_fail:
@@ -318,16 +287,16 @@ func _respawn(play_fail: bool) -> void:
 # ---------------------------------------------------------------------------
 
 func _build_character_rig() -> void:
-	# Use the character scene uploaded for this project instead of the old
-	# procedural capsule-person replacement.
+	# Instance the character scene exactly as supplied by the user.
+	# Only apply a root transform so it fits the existing player controller.
 	_rig_root = source_character
 	_rig_root.visible = true
 	_rig_root.position = Vector3(0.0, 0.94, 0.0)
 	_rig_root.rotation = Vector3.ZERO
 	_rig_root.scale = Vector3.ONE * 0.82
 
-	# This uploaded model is a grouped scene rather than a skeleton. Its
-	# complete body can still tilt together for a seated butt-bounce.
+	# The uploaded scene is a static grouped mesh, not a skeleton.
+	# Keep its mesh geometry and materials untouched.
 	_torso_pivot = null
 	_head_pivot = null
 	_left_shoulder = null
@@ -339,35 +308,7 @@ func _build_character_rig() -> void:
 	_left_knee = null
 	_right_knee = null
 
-	_style_uploaded_character()
 	_update_character_animation(0.0, Vector3.ZERO)
-
-
-func _style_uploaded_character() -> void:
-	for mesh_value in source_character.find_children("*", "MeshInstance3D", true, false):
-		var mesh_instance := mesh_value as MeshInstance3D
-		if mesh_instance == null:
-			continue
-
-		var part_name := String(mesh_instance.name).to_lower()
-		var tint := Color(0.22, 0.72, 0.84)
-		if part_name == "body":
-			tint = Color(0.20, 0.74, 0.88)
-		elif part_name == "butt" or part_name == "butt2":
-			tint = Color(1.0, 0.48, 0.32)
-		elif part_name == "eye1" or part_name == "eye2" or part_name == "mouth":
-			tint = Color(0.035, 0.055, 0.075)
-		elif part_name == "leg1" or part_name == "meshinstance3d" or part_name == "meshinstance3d2":
-			tint = Color(0.13, 0.19, 0.29)
-		elif part_name.begins_with("finger"):
-			tint = Color(0.95, 0.67, 0.43)
-		elif part_name == "hand1" or part_name == "hand2":
-			tint = Color(0.18, 0.61, 0.75)
-
-		var material := StandardMaterial3D.new()
-		material.albedo_color = tint
-		material.roughness = 0.72
-		mesh_instance.material_override = material
 
 
 func _make_arm(side: float, skin_material: StandardMaterial3D, sleeve_material: StandardMaterial3D) -> Node3D:
@@ -515,13 +456,9 @@ func _update_character_animation(delta: float, input_dir: Vector3) -> void:
 
 	if _landing_timer > 0.0:
 		_landing_timer = maxf(_landing_timer - delta, 0.0)
-		if _bounce_in_air:
-			# Once the fart-bounce has left the roof, keep the airborne seated pose.
-			_apply_jump_pose(blend)
-		else:
-			var landing_ratio := clampf(_landing_timer / butt_landing_duration, 0.0, 1.0)
-			var sit_weight := _smoothstep(landing_ratio)
-			_apply_sit_pose(sit_weight, 0.0, blend)
+		var landing_ratio := clampf(_landing_timer / butt_landing_duration, 0.0, 1.0)
+		var sit_weight := _smoothstep(landing_ratio)
+		_apply_sit_pose(sit_weight, 0.0, blend)
 		return
 
 	if _charging and is_on_floor():
