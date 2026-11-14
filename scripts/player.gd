@@ -38,8 +38,8 @@ var _has_left_floor_since_bounce := false
 var _landing_timer := 0.0
 var _animation_time := 0.0
 
-# A lightweight articulated replacement rig is generated because the supplied
-# GLB is a single static mesh: it contains no skeleton or animation clips.
+# The uploaded character is a grouped mesh. Runtime pivots animate its
+# existing separate arm and leg pieces without replacing the supplied model.
 var _rig_root: Node3D
 var _torso_pivot: Node3D
 var _head_pivot: Node3D
@@ -240,8 +240,8 @@ func apply_spring_boost(upward_power: float = 17.0, forward_power: float = 4.0) 
 
 
 func _begin_butt_landing() -> void:
-	# The supplied LaunchAudio stream is the fart sound: play it on contact,
-	# not when the character first leaves the roof.
+	# Play the FartAudio stream at the first physics frame of ground contact,
+	# skipping its silent MP3 lead-in so the sound lines up with the impact.
 	# The MP3 begins with about 0.7 seconds of silence; skip that lead-in so
 	# the fart is heard immediately on the first physics frame of butt impact.
 	fart_audio.stop()
