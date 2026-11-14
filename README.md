@@ -88,3 +88,10 @@ The MIT license does **not** automatically cover the 3D models or audio files. A
 ## Development status
 
 This is an early playable prototype. The current character animation update is code-driven and should be tested in Godot 4.7.2 for pose alignment, collisions, and timing before release.
+
+
+## Rooftop environment and obstacles
+
+The rooftop route now includes additional moving transfer platforms and swinging wrecking-ball hazards. Existing crumble and spring pads activate when the player touches them. The environment adds animated extractor fans, rooftop pipework, exhaust vents, warning beacons, safety rails, softer sky ambient lighting, and reduced distance fog.
+
+**Bounce controls:** hold Space to crouch and charge; release Space to launch. Use WASD or the arrow keys to steer. Touching a swinging ball sends the player back to the checkpoint.
