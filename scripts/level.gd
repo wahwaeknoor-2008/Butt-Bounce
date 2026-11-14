@@ -47,9 +47,18 @@ func _process(delta: float) -> void:
 	for warning_light in _warning_lights:
 		warning_light.light_energy = 0.65 + 0.45 * (0.5 + 0.5 * sin(_detail_time * 3.2))
 
-	var target := player.global_position + Vector3(0.0, 4.2, 10.0)
-	camera.global_position = camera.global_position.lerp(target, 1.0 - exp(-5.0 * delta))
-	camera.look_at(player.global_position + Vector3(0.0, 0.8, 0.0), Vector3.UP)
+	var facing := player.visual.global_transform.basis.z
+	facing.y = 0.0
+	if facing.length_squared() < 0.001:
+		facing = Vector3(0.0, 0.0, -1.0)
+	else:
+		facing = facing.normalized()
+
+	# Keep the camera behind the character's actual heading, not behind a
+	# fixed world-space direction. This follows turns and reverse travel.
+	var target := player.global_position - facing * 10.0 + Vector3.UP * 4.2
+	camera.global_position = camera.global_position.lerp(target, 1.0 - exp(-8.0 * delta))
+	camera.look_at(player.global_position + Vector3.UP * 0.85 + facing * 1.1, Vector3.UP)
 	var travelled := int(maxf(0.0, -player.global_position.z))
 	distance_label.text = "ROOFTOP RUN   •   %dm" % travelled
 
@@ -289,10 +298,13 @@ func _create_camera() -> void:
 	camera = Camera3D.new()
 	camera.name = "FollowCamera"
 	camera.fov = 68.0
-	camera.position = player.global_position + Vector3(0.0, 4.2, 10.0)
 	add_child(camera)
 	camera.current = true
-	camera.look_at(player.global_position + Vector3(0.0, 0.8, 0.0), Vector3.UP)
+	var facing := player.visual.global_transform.basis.z
+	facing.y = 0.0
+	facing = facing.normalized()
+	camera.global_position = player.global_position - facing * 10.0 + Vector3.UP * 4.2
+	camera.look_at(player.global_position + Vector3.UP * 0.85 + facing * 1.1, Vector3.UP)
 
 
 func _create_hud() -> void:
