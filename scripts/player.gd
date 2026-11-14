@@ -32,6 +32,7 @@ var _checkpoint_position := Vector3(0, 1.05, 4.0)
 var _checkpoint_active := false
 var _was_below_world := false
 var _bounce_in_air := false
+var _has_left_floor_since_bounce := false
 var _landing_timer := 0.0
 var _animation_time := 0.0
 
@@ -79,7 +80,8 @@ func _physics_process(delta: float) -> void:
 	var charge_held := _space_down
 
 	if was_on_floor:
-		velocity.y = minf(velocity.y, 0.0)
+		if not _bounce_in_air:
+			velocity.y = minf(velocity.y, 0.0)
 
 		if _landing_timer > 0.0:
 			# Briefly finish the butt landing and stand-up recovery before
@@ -143,7 +145,9 @@ func _physics_process(delta: float) -> void:
 
 	# Detect the first frame the bouncing player touches the floor while
 	# descending. Start the seated landing, then blend back to standing.
-	if _bounce_in_air and is_on_floor() and vertical_speed_before_slide <= 0.0:
+	if _bounce_in_air and not is_on_floor():
+		_has_left_floor_since_bounce = true
+	if _bounce_in_air and _has_left_floor_since_bounce and is_on_floor() and vertical_speed_before_slide <= 0.0:
 		_begin_butt_landing()
 
 	_update_character_animation(delta, input_dir)
@@ -202,6 +206,7 @@ func _launch_bounce(input_direction: Vector3) -> void:
 	_charging = false
 	_charge_time = 0.0
 	_bounce_in_air = true
+	_has_left_floor_since_bounce = false
 	_landing_timer = 0.0
 	charge_updated.emit(0.0)
 
@@ -217,6 +222,7 @@ func apply_spring_boost(upward_power: float = 17.0, forward_power: float = 4.0) 
 	_charging = false
 	_charge_time = 0.0
 	_bounce_in_air = true
+	_has_left_floor_since_bounce = false
 	_landing_timer = 0.0
 	charge_updated.emit(0.0)
 
@@ -228,6 +234,7 @@ func apply_spring_boost(upward_power: float = 17.0, forward_power: float = 4.0) 
 func _begin_butt_landing() -> void:
 	floor_snap_length = 0.22
 	_bounce_in_air = false
+	_has_left_floor_since_bounce = false
 	_charging = false
 	_charge_time = 0.0
 	_landing_timer = butt_landing_duration
@@ -253,6 +260,7 @@ func _respawn(play_fail: bool) -> void:
 	_charging = false
 	_charge_time = 0.0
 	_bounce_in_air = false
+	_has_left_floor_since_bounce = false
 	_landing_timer = 0.0
 	charge_updated.emit(0.0)
 
