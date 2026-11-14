@@ -242,8 +242,10 @@ func apply_spring_boost(upward_power: float = 17.0, forward_power: float = 4.0) 
 func _begin_butt_landing() -> void:
 	# The supplied LaunchAudio stream is the fart sound: play it on contact,
 	# not when the character first leaves the roof.
+	# The MP3 begins with about 0.7 seconds of silence; skip that lead-in so
+	# the fart is heard immediately on the first physics frame of butt impact.
 	fart_audio.stop()
-	fart_audio.play()
+	fart_audio.play(0.68)
 	floor_snap_length = 0.22
 	_bounce_in_air = false
 	_has_left_floor_since_bounce = false
@@ -295,20 +297,88 @@ func _build_character_rig() -> void:
 	_rig_root.rotation = Vector3.ZERO
 	_rig_root.scale = Vector3.ONE * 0.82
 
-	# The uploaded scene is a static grouped mesh, not a skeleton.
-	# Keep its mesh geometry and materials untouched.
+	# The uploaded scene is a grouped mesh rather than a skeleton. Create
+	# small pivots around its existing separate hand and leg meshes so they
+	# can swing without replacing or reshaping the supplied model.
 	_torso_pivot = null
 	_head_pivot = null
-	_left_shoulder = null
-	_right_shoulder = null
 	_left_elbow = null
 	_right_elbow = null
-	_left_hip = null
-	_right_hip = null
 	_left_knee = null
 	_right_knee = null
 
+	_left_shoulder = _make_part_pivot(
+		"AnimatedLeftArm",
+		Vector3(-0.6687, -0.3224, 0.0669),
+		["hand2", "FINGER", "FINGER2", "FINGER3", "FINGER4"]
+	)
+	_right_shoulder = _make_part_pivot(
+		"AnimatedRightArm",
+		Vector3(0.5419, -0.3142, 0.0178),
+		["hand1", "FINGER5", "FINGER6", "FINGER7", "FINGER8"]
+	)
+
+	# The two leg cylinders were authored as a parent/child pair. Detach the
+	# child first so each leg and its shoe can swing independently.
+	_left_hip = _make_part_pivot(
+		"AnimatedLeftLeg",
+		Vector3(-0.2523, -0.7928, 0.0233),
+		["leg1/leg1", "MeshInstance3D2"]
+	)
+	_right_hip = _make_part_pivot(
+		"AnimatedRightLeg",
+		Vector3(0.1474, -0.8018, 0.0023),
+		["leg1", "MeshInstance3D"]
+	)
+
+	_apply_uploaded_character_colors()
 	_update_character_animation(0.0, Vector3.ZERO)
+
+
+func _make_part_pivot(pivot_name: String, local_position: Vector3, part_paths: Array[String]) -> Node3D:
+	var pivot := Node3D.new()
+	pivot.name = pivot_name
+	pivot.position = local_position
+	source_character.add_child(pivot)
+
+	for part_path in part_paths:
+		var part := source_character.get_node_or_null(NodePath(part_path))
+		if part != null:
+			part.reparent(pivot, true)
+
+	return pivot
+
+
+func _apply_uploaded_character_colors() -> void:
+	# The exact supplied model is retained; only per-part material colors change.
+	for mesh_value in source_character.find_children("*", "MeshInstance3D", true, false):
+		var part := mesh_value as MeshInstance3D
+		if part == null:
+			continue
+
+		var part_name := String(part.name).to_lower()
+		var color := Color(0.65, 0.65, 0.68)
+
+		match part_name:
+			"body":
+				color = Color(0.12, 0.78, 0.25) # Green body
+			"butt", "butt2":
+				color = Color(0.95, 0.12, 0.16) # Red butt cheeks
+			"leg1":
+				color = Color(0.12, 0.30, 0.95) # Blue legs
+			"meshinstance3d", "meshinstance3d2":
+				color = Color(0.025, 0.025, 0.035) # Black shoes
+			"hand1", "hand2", "finger", "finger2", "finger3", "finger4", "finger5", "finger6", "finger7", "finger8":
+				color = Color(1.0, 0.78, 0.06) # Yellow hands
+			"eye1", "eye2":
+				color = Color(0.008, 0.008, 0.012) # Black eyes
+			_:
+				continue
+
+		var material := StandardMaterial3D.new()
+		material.albedo_color = color
+		material.roughness = 0.68
+		part.material_override = material
 
 
 func _make_arm(side: float, skin_material: StandardMaterial3D, sleeve_material: StandardMaterial3D) -> Node3D:
