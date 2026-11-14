@@ -16,6 +16,7 @@ The configured main scene is `scenes/rooftop_rush.tscn`.
 
 ## Controls
 
+
 | Input | Action |
 |---|---|
 | W / A / S / D or arrow keys | Move and steer |
