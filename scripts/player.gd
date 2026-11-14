@@ -19,7 +19,7 @@ signal player_fell
 @export var butt_landing_duration: float = 0.38
 
 @onready var visual: Node3D = $Visual
-@onready var fart_audio: AudioStreamPlayer = $LaunchAudio
+@onready var fart_audio: AudioStreamPlayer = $FartAudio
 @onready var fail_audio: AudioStreamPlayer = $FailAudio
 @onready var source_character: Node3D = $Visual/ParkourCharacter
 
@@ -515,9 +515,13 @@ func _update_character_animation(delta: float, input_dir: Vector3) -> void:
 
 	if _landing_timer > 0.0:
 		_landing_timer = maxf(_landing_timer - delta, 0.0)
-		var landing_ratio := clampf(_landing_timer / butt_landing_duration, 0.0, 1.0)
-		var sit_weight := _smoothstep(landing_ratio)
-		_apply_sit_pose(sit_weight, 0.0, blend)
+		if _bounce_in_air:
+			# Once the fart-bounce has left the roof, keep the airborne seated pose.
+			_apply_jump_pose(blend)
+		else:
+			var landing_ratio := clampf(_landing_timer / butt_landing_duration, 0.0, 1.0)
+			var sit_weight := _smoothstep(landing_ratio)
+			_apply_sit_pose(sit_weight, 0.0, blend)
 		return
 
 	if _charging and is_on_floor():
