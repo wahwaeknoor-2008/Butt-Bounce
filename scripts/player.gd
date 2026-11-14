@@ -372,6 +372,8 @@ func _apply_uploaded_character_colors() -> void:
 				color = Color(1.0, 0.78, 0.06) # Yellow hands
 			"eye1", "eye2":
 				color = Color(0.008, 0.008, 0.012) # Black eyes
+			"mouth":
+				color = Color(1.0, 0.78, 0.06) # Yellow lips
 			_:
 				continue
 
